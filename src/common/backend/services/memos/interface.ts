@@ -14,11 +14,12 @@ export interface MemosBackendServiceConfig {
 }
 
 export interface MemosUserResponse {
-  name: string;
-  username: string;
-  email: string;
-  avatarUrl: string;
-  description: string;
+  user?: {
+    username: string;
+    avatarUrl: string;
+    description: string;
+  };
+  lastAccessedAt?: string;
 }
 
 export interface MemosUserInfo {

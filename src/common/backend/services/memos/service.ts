@@ -52,15 +52,20 @@ export default class MemosDocumentService implements DocumentService {
 	};
 
   getUserInfo = async (): Promise<MemosUserInfo> => {
-    const response = await this.request.post<MemosUserResponse>('v1/auth/status');
+    const response = await this.request.get<MemosUserResponse>('v1/auth/sessions/current');
+
+    if (!response) {
+      throw new Error('获取用户信息失败');
+    }
+    const userInfo = response.user || {};
 
     const MemosUserInfo: MemosUserInfo = {
-      name: response.username || 'Memos User',
-      avatar: response.avatarUrl
-        ? `${this.origin}${response.avatarUrl}`
+      name: userInfo.username || 'Memos User',
+      avatar: userInfo.avatarUrl
+        ? `${this.origin}${userInfo.avatarUrl}`
         : 'https://demo.usememos.com/full-logo.webp',
       homePage: this.origin,
-      description: response.description || 'Memos User',
+      description: userInfo.description || 'Memos User',
     };
 
     this.UserInfo = MemosUserInfo;
