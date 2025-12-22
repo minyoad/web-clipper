@@ -1,4 +1,4 @@
-import 'antd/dist/antd.less';
+import 'antd/dist/antd.css'; // 直接导入编译好的antd CSS文件，解决样式缺失问题
 import Container from 'typedi';
 import React from 'react';
 import dva, { router } from 'dva';

@@ -45,8 +45,10 @@ module.exports = {
       browserActions: resolve('src/browser/actions/'),
       pageActions: resolve('src/actions'),
       extensions: resolve('src/extensions/'),
+      'webdav/web': resolve('node_modules/webdav/dist/web/index.js'),
     },
-    extensions: ['.ts', '.tsx', '.js', 'less'],
+    extensions: ['.ts', '.tsx', '.js', '.json', 'less'],
+    mainFields: ['browser', 'module', 'main'],
   },
   module: {
     rules: [
@@ -66,11 +68,10 @@ module.exports = {
             module: 'esnext',
           },
         },
-        exclude: /node_modules/,
+        exclude: /node_modules\/(?!@web-clipper\/shared)/,
       },
       {
-        include: /hypermd|codemirror/,
-        test: [/\.css$/],
+        test: /\.css$/,
         use: [
           {
             loader: 'style-loader',
@@ -80,6 +81,26 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /node_modules\/antd\/es\/.*\/style\/.*\.less$/,
+        use: [
+          {
+            loader: 'style-loader',
+          },
+          {
+            loader: 'css-loader',
+          },
+          {
+            loader: 'less-loader',
+            options: {
+              lessOptions: {
+                javascriptEnabled: true,
+              },
+            },
+          },
+        ],
+      },
+
       {
         test: /\.(png|jpg|gif)$/,
         use: [
@@ -100,6 +121,9 @@ module.exports = {
           },
           {
             loader: 'css-loader',
+            options: {
+              modules: false,
+            },
           },
           {
             loader: 'less-loader',
@@ -124,9 +148,10 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
-              modules: true,
-              camelCase: true,
-              localIdentName: '[path][name]__[local]--[hash:base64:5]',
+              modules: {
+                camelCase: true,
+                localIdentName: '[path][name]__[local]--[hash:base64:5]',
+              },
             },
           },
           {
@@ -184,3 +209,5 @@ module.exports = {
     }),
   ].filter((plugin) => !!plugin),
 };
+
+

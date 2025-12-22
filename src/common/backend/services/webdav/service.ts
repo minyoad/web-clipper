@@ -1,8 +1,8 @@
 import { WebDAVServiceConfig } from './interface';
 import { DocumentService, CreateDocumentRequest, Repository } from './../interface';
 //@ts-ignore
-//@TODO use webdav/web
-import { FileStat, WebDAVClient, createClient } from 'webdav/dist/web';
+// Use webdav/web with webpack alias
+import { FileStat, WebDAVClient, createClient } from 'webdav/web';
 
 export default class WebDAVDocumentService implements DocumentService {
   private auth: string;
@@ -64,3 +64,5 @@ export default class WebDAVDocumentService implements DocumentService {
     return;
   };
 }
+
+

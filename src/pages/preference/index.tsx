@@ -12,6 +12,8 @@ import {
   ToolOutlined,
   UserOutlined,
   SettingOutlined,
+  InfoCircleOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 
 import { Tabs, Badge, message } from 'antd';
@@ -66,13 +68,13 @@ const tabs = [
   },
   {
     path: 'privacy',
-    icon: <IconFont type="privacy" />,
+    icon: <InfoCircleOutlined />,
     title: <FormattedMessage id="preference.tab.privacy" defaultMessage="Privacy policy" />,
     component: Privacy,
   },
   {
     path: 'changelog',
-    icon: <IconFont type="changelog" />,
+    icon: <FileTextOutlined />,
     title: <FormattedMessage id="preference.tab.changelog" defaultMessage="Changelog" />,
     component: Changelog,
   },
