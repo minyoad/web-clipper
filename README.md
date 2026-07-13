@@ -1,13 +1,10 @@
 <h1 align="center">Web Clipper</h1>
+
+> **Note**: This is a fork of [webclipper/web-clipper](https://github.com/webclipper/web-clipper). The original project appears to be no longer maintained. This fork keeps the extension working and adds improvements.
+
 <p align="center">
-    <a href="https://github.com/webclipper/web-clipper/actions">
-      <img src="https://github.com/webclipper/web-clipper/workflows/CI%20Test/badge.svg" alt="CI Test Status">
-    </a>
-     <a href="https://github.com/webclipper/web-clipper/actions">
-      <img src="https://github.com/webclipper/web-clipper/workflows/Release resource/badge.svg" alt="Release resource status">
-    </a>
-    <a href="https://codecov.io/gh/webclipper/web-clipper">
-      <img src="https://img.shields.io/codecov/c/github/webclipper/web-clipper/master.svg?style=flat-square" alt="Codecov">
+    <a href="https://github.com/minyoad/web-clipper/actions">
+      <img src="https://github.com/minyoad/web-clipper/workflows/CI/badge.svg" alt="CI Status">
     </a>
 </p>
 
@@ -47,7 +44,7 @@ ps: Because the review takes a week, the version will fall behind.
 
 #### From Github
 
-1. Download the webclipper.zip from [release page](https://github.com/webclipper/web-clipper/releases)
+1. Download the `web-clipper-chrome.zip` from [release page](https://github.com/minyoad/web-clipper/releases)
 2. Go to **chrome://extensions/** and check the box for **Developer mode** in the top right.
 3. Locate the ZIP file on your computer and unzip it.
 4. Go back to the chrome://extensions/ page and click the **Load unpacked extension** button and select the unzipped folder for your extension to install it.
@@ -55,24 +52,26 @@ ps: Because the review takes a week, the version will fall behind.
 ### Develop
 
 ```bash
-$ git clone https://github.com/webclipper/web-clipper.git
+$ git clone https://github.com/minyoad/web-clipper.git
 $ cd web-clipper
-$ npm i
-$ npm run dev
+$ pnpm install
+$ pnpm dev
 ```
 
-- You should load the 'dist/chrome' folder in Chrome.
+- Load the `dist/chrome` folder in Chrome as an unpacked extension.
+- Load the `dist/manifest.json` folder in Firefox.
 
-- You should load the 'dist/manifest.json' folder in Firefox.
+### Build
+
+```bash
+$ pnpm release
+```
+
+The packaged extensions will be in the `release/` directory.
 
 ### Test
 
 ```bash
-$ npm run test
+$ pnpm test
 ```
 
-### Feedback
-
-| Type     | Link                                                 |
-| -------- | ---------------------------------------------------- |
-| Telegram | [Link](https://t.me/joinchat/HoVttRRUIA6aXASixzoqAw) |
