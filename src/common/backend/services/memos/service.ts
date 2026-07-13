@@ -52,7 +52,7 @@ export default class MemosDocumentService implements DocumentService {
 	};
 
   getUserInfo = async (): Promise<MemosUserInfo> => {
-    const response = await this.request.get<MemosUserResponse>('v1/auth/sessions/current');
+    const response = await this.request.get<MemosUserResponse>('v1/auth/me');
 
     if (!response) {
       throw new Error('获取用户信息失败');
