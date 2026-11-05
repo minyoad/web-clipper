@@ -33,6 +33,7 @@
 	"backend.services.memos.headerForm.tag": "请输入标签名称，多个标签用英文逗号分隔，如 tag1,tag2...",
 	"backend.services.memos.headerForm.visibility": "文档类型",
 	"backend.services.memos.headerForm.VisibilityType.private": "私人",
+	"backend.services.memos.headerForm.VisibilityType.protected": "工作区可见",
 	"backend.services.memos.headerForm.VisibilityType.public": "公开",
 	"backend.services.memos.headerForm.tag_error": "标签格式错误，请检查",
 

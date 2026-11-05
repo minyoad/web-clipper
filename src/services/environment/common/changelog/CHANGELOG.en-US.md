@@ -1,3 +1,10 @@
+## 1.43.0
+
+`2026-11-05`
+
+- Adapt to the latest Memos API (v0.26+), fixing failures when fetching user info and saving memos
+- Add the "protected" (workspace-visible) visibility option for Memos
+
 ## 1.42.0
 
 `2025-10-21`

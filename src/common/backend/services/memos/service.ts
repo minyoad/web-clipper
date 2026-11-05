@@ -3,44 +3,81 @@ import { extend, RequestMethod } from 'umi-request';
 import { CompleteStatus } from '../interface';
 import { Repository } from '@/common/backend/services/interface';
 import {
-	MemosBackendServiceConfig,
-	MemoCreateDocumentRequest,
-	MemosUserResponse,
-	MemosUserInfo
+  MemosBackendServiceConfig,
+  MemoCreateDocumentRequest,
+  MemosUserInfo,
 } from './interface';
 
+interface MemosRequestError extends Error {
+  status?: number;
+}
 
+/**
+ * 仅适配最新版 Memos（v0.26+ / 26.x）的 API：
+ * - 基础路径为 /api
+ * - 获取当前用户：GET  /api/auth/me
+ * - 创建笔记：    POST /api/memos
+ */
 export default class MemosDocumentService implements DocumentService {
   private request: RequestMethod;
   private token: string;
   private origin: string;
-	private UserInfo: MemosUserInfo | null;
+  private UserInfo: MemosUserInfo | null;
 
   constructor({ accessToken, origin }: MemosBackendServiceConfig) {
-    const realHost = origin || 'https://demo.usememos.com';
+    const realHost = (origin || 'https://demo.usememos.com').replace(/\/+$/, '');
     this.request = extend({
       prefix: `${realHost}/api/`,
-      headers: { Authorization: `Bearer ${accessToken}` },
-      timeout: 5000,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000,
     });
     this.request.interceptors.response.use(
       async response => {
         if (!response.ok) {
-          const json = await response.clone().json();
-          throw new Error(`(${response.status}) Err_id=${json.code || ''}: ${json.message || '未知错误'}`);
+          let code = '';
+          let message = '';
+          try {
+            const json = await response.clone().json();
+            code = json?.code ?? json?.id ?? '';
+            message = json?.message ?? '';
+          } catch {
+            // 响应体不是 JSON 时忽略
+          }
+          const error = new Error(
+            `(${response.status})${code ? ` code=${code}:` : ''} ${message || '未知错误'}`
+          ) as MemosRequestError;
+          error.status = response.status;
+          throw error;
         }
         return response;
       },
       error => {
         if (error.response) {
-          // 服务器返回错误
-          return error.response.json().then((json: any) => {
-            throw new Error(`(${error.response.status}) code=${json.id || ''}: ${json.message || error.message || '未知错误'}`);
-          });
+          const status = error.response.status;
+          return error.response.json().then(
+            (json: any) => {
+              const e = new Error(
+                `(${status})${json?.code ? ` code=${json.code}:` : ''} ${
+                  json?.message || error.message || '未知错误'
+                }`
+              ) as MemosRequestError;
+              e.status = status;
+              throw e;
+            },
+            () => {
+              const e = new Error(
+                `(${status}) ${error.message || '未知错误'}`
+              ) as MemosRequestError;
+              e.status = status;
+              throw e;
+            }
+          );
         }
-        // (50X)网络错误等
         throw new Error(`(500): ${error.message || '网络错误'}`);
-      },
+      }
     );
     this.token = accessToken;
     this.origin = realHost;
@@ -48,69 +85,94 @@ export default class MemosDocumentService implements DocumentService {
   }
 
   getId = () => {
-		return '0';
-	};
+    return '0';
+  };
 
   getUserInfo = async (): Promise<MemosUserInfo> => {
-    const response = await this.request.get<MemosUserResponse>('v1/auth/me');
+    const response = await this.request.get<{ user?: any }>('auth/me');
+    const user = response?.user || {};
 
-    if (!response) {
+    const username: string =
+      user.username || (typeof user.name === 'string' ? user.name.replace(/^users\//, '') : '');
+
+    if (!username) {
       throw new Error('获取用户信息失败');
     }
-    const userInfo = response.user || {};
 
-    const MemosUserInfo: MemosUserInfo = {
-      name: userInfo.username || 'Memos User',
-      avatar: userInfo.avatarUrl
-        ? `${this.origin}${userInfo.avatarUrl}`
-        : 'https://demo.usememos.com/full-logo.webp',
+    const displayName: string = user.displayName || user.displayname || user.nickname || username;
+
+    let avatar: string;
+    if (user.avatarUrl) {
+      avatar = /^https?:\/\//.test(user.avatarUrl)
+        ? user.avatarUrl
+        : `${this.origin}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`;
+    } else {
+      avatar = 'https://demo.usememos.com/full-logo.webp';
+    }
+
+    const userInfo: MemosUserInfo = {
+      name: username,
+      avatar,
       homePage: this.origin,
-      description: userInfo.description || 'Memos User',
+      description: user.description || displayName,
     };
 
-    this.UserInfo = MemosUserInfo;
-    return MemosUserInfo;
+    this.UserInfo = userInfo;
+    return userInfo;
   };
 
   private addTag = (tags: string, content: string): string => {
-    const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+    const tagArray = tags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag);
     const formattedTags = tagArray.map(tag => `#${tag}`).join(' ');
     return `${content}\n${formattedTags}`;
   };
 
-  createDocument = async (
-    info: MemoCreateDocumentRequest
-  ): Promise<CompleteStatus> => {
+  /** 从返回的 Memo 中取出 uid（资源名格式为 memos/{uid}） */
+  private pickMemoUid = (memo: any): string => {
+    if (!memo) {
+      return '';
+    }
+    if (typeof memo.name === 'string' && memo.name) {
+      return memo.name.replace(/^memos\//, '');
+    }
+    return memo.uid || memo.id || '';
+  };
+
+  createDocument = async (info: MemoCreateDocumentRequest): Promise<CompleteStatus> => {
     if (!this.UserInfo) {
       this.UserInfo = await this.getUserInfo();
     }
 
+    let content = info.content;
     if (info.tags) {
-      info.content = this.addTag(info.tags, info.content);
+      content = this.addTag(info.tags, content);
     }
 
-    const response = await this.request.post<{
-      id: string;
-      content: string;
-      creator: string;
-    }>('v1/memos', {
+    const memo = await this.request.post<any>('memos', {
       data: {
-        content: info.content,
+        content,
         visibility: info.visibility || 'PRIVATE',
+        state: 'NORMAL',
       },
     });
 
-    return {
-      href: `${this.origin}/u/${this.UserInfo.name}`,
-    };
+    const uid = this.pickMemoUid(memo);
+    const href = uid ? `${this.origin}/m/${uid}` : `${this.origin}/u/${this.UserInfo.name}`;
+
+    return { href };
   };
 
   getRepositories = async (): Promise<Repository[]> => {
-    return [{
-      id: 'memos_default',
-      name: '默认分区 Default Repo',
-      groupId: 'memos',
-      groupName: '默认分组 Defualt Group',
-    }];
+    return [
+      {
+        id: 'memos_default',
+        name: '默认分区 Default Repo',
+        groupId: 'memos',
+        groupName: '默认分组 Defualt Group',
+      },
+    ];
   };
 }
