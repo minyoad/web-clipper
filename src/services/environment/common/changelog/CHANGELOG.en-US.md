@@ -1,3 +1,11 @@
+## 1.44.0
+
+`2026-11-05`
+
+- Support self-hosted (Docker) SiYuan with a configurable server address
+- The SiYuan built-in image hosting now also supports a custom server address
+- Improve SiYuan configuration form labels
+
 ## 1.43.0
 
 `2026-11-05`

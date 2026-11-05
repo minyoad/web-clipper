@@ -12,10 +12,13 @@ import localeService from '@/common/locales';
  */
 export default class SiYuanDocumentService implements DocumentService {
   private client: SiYuanClient;
-  constructor(config: { accessToken?: string }) {
+  private origin: string;
+  constructor(config: { accessToken?: string; origin?: string }) {
+    this.origin = config.origin || '';
     this.client = new SiYuanClient({
       request: Container.get(IBasicRequestService),
       accessToken: config.accessToken,
+      origin: config.origin,
     });
   }
 
@@ -28,7 +31,7 @@ export default class SiYuanDocumentService implements DocumentService {
     return {
       name: 'siyuan',
       avatar: '',
-      homePage: '',
+      homePage: this.origin,
       description: ``,
     };
   };
